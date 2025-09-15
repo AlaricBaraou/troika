@@ -84,6 +84,7 @@ uniform vec3 uTroikaStrokeColor;
 uniform float uTroikaStrokeWidth;
 uniform float uTroikaStrokeOpacity;
 uniform bool uTroikaSDFDebug;
+uniform float uTroikaFillOutline;
 varying vec2 vTroikaGlyphUV;
 varying vec4 vTroikaTextureUVBounds;
 varying float vTroikaTextureChannel;
@@ -194,8 +195,8 @@ gl_FragColor = mix(fillRGBA, strokeRGBA, smoothstep(
   fragDistance
 ));
 gl_FragColor.a *= edgeAlpha;
-// if is outline pass
-if (uTroikaEdgeOffset > 0.0) {
+// if is outline pass and outline only, "discard" where fill would be
+if (uTroikaFillOutline == 0.0 && uTroikaEdgeOffset > 0.0) {
   float innerAlpha = 1.0 - troikaGetEdgeAlpha(fragDistance, 0.0, max(aaDist, uTroikaBlurRadius));
   gl_FragColor.a *= innerAlpha;
 }
@@ -233,7 +234,8 @@ export function createTextDerivedMaterial(baseMaterial) {
       uTroikaStrokeOpacity: {value: 1},
       uTroikaOrient: {value: new Matrix3()},
       uTroikaUseGlyphColors: {value: true},
-      uTroikaSDFDebug: {value: false}
+      uTroikaSDFDebug: {value: false},
+      uTroikaFillOutline: {value: 0}
     },
     vertexDefs: VERTEX_DEFS,
     vertexTransform: VERTEX_TRANSFORM,
