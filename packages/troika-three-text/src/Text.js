@@ -7,6 +7,10 @@ import {
   PlaneGeometry,
   Vector3,
   Vector2,
+  CustomBlending,
+  OneFactor,
+  OneMinusSrcAlphaFactor,
+  NormalBlending,
 } from 'three'
 import { GlyphsGeometry } from './GlyphsGeometry.js'
 import { createTextDerivedMaterial } from './TextDerivedMaterial.js'
@@ -398,6 +402,12 @@ class Text extends Mesh {
      */
     this.gpuAccelerateSDF = true
 
+    /**
+     * @member {boolean} usePremultipliedAlpha
+     * TODO
+     **/
+    this.usePremultipliedAlpha = true
+
     this.debugSDF = false
   }
 
@@ -638,7 +648,15 @@ class Text extends Mesh {
         }
         fillOpacity = this.fillOpacity
       }
-
+      if(this.usePremultipliedAlpha){
+        material.premultipliedAlpha = true
+        material.blending = CustomBlending;
+        material.blendSrc = OneFactor; // Use the source color as-is
+        material.blendDst = OneMinusSrcAlphaFactor;
+      }else{
+        material.blending = NormalBlending
+      }
+      
       uniforms.uTroikaEdgeOffset.value = distanceOffset
       uniforms.uTroikaPositionOffset.value.set(offsetX, offsetY)
       uniforms.uTroikaBlurRadius.value = blurRadius
@@ -663,6 +681,7 @@ class Text extends Mesh {
       this.geometry.applyClipRect(uniforms.uTroikaClipRect.value)
     }
     uniforms.uTroikaSDFDebug.value = !!this.debugSDF
+    uniforms.uUsePremultipliedAlpha.value = this.usePremultipliedAlpha ? 1 : 0
     material.polygonOffset = !!this.depthOffset
     material.polygonOffsetFactor = material.polygonOffsetUnits = this.depthOffset || 0
 

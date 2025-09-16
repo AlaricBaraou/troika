@@ -27,6 +27,7 @@ Data texture packing strategy:
 30: uTroikaStrokeOpacity
 
 # Outline:
+27: usePremultipliedAlpha (0/1)
 28-29: uTroikaPositionOffset
 30: uTroikaEdgeOffset
 31: uTroikaBlurRadius
@@ -210,6 +211,7 @@ export class BatchedText extends Text {
           uTroikaStrokeOpacity,
           uTroikaFillOpacity,
           uTroikaCurveRadius,
+          uUsePremultipliedAlpha
         } = material.uniforms;
 
         // Total bounds for uv
@@ -234,6 +236,7 @@ export class BatchedText extends Text {
 
         // Curve radius
         setTexData(startIndex + 26, uTroikaCurveRadius.value)
+          setTexData(startIndex + 27, uUsePremultipliedAlpha.value);
 
         if (isOutline) {
           // Outline properties
@@ -415,6 +418,7 @@ function createBatchedTextMaterial (baseMaterial) {
         'uTroikaStrokeOpacity',
         'uTroikaFillOpacity',
         'uTroikaCurveRadius',
+        'uUsePremultipliedAlpha',
         'diffuse'
       ]
       varyingUniforms.forEach(uniformName => {
@@ -444,6 +448,7 @@ function createBatchedTextMaterial (baseMaterial) {
       diffuse = troikaFloatToColor(data.x);
       uTroikaFillOpacity = data.y;
       uTroikaCurveRadius = data.z;
+      uUsePremultipliedAlpha = data.w;
       
       data = troikaBatchTexel(7.0);
       if (uTroikaIsOutline) {

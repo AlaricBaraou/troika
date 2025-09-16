@@ -84,6 +84,7 @@ uniform vec3 uTroikaStrokeColor;
 uniform float uTroikaStrokeWidth;
 uniform float uTroikaStrokeOpacity;
 uniform bool uTroikaSDFDebug;
+uniform float uUsePremultipliedAlpha;
 varying vec2 vTroikaGlyphUV;
 varying vec4 vTroikaTextureUVBounds;
 varying float vTroikaTextureChannel;
@@ -195,9 +196,11 @@ gl_FragColor = mix(fillRGBA, strokeRGBA, smoothstep(
 ));
 gl_FragColor.a *= edgeAlpha;
 #endif
-
+if(uUsePremultipliedAlpha == 1.0){
+  gl_FragColor.rgb *= gl_FragColor.a;
+}
 if (edgeAlpha == 0.0) {
-  discard;
+    discard;
 }
 `
 
@@ -228,7 +231,8 @@ export function createTextDerivedMaterial(baseMaterial) {
       uTroikaStrokeOpacity: {value: 1},
       uTroikaOrient: {value: new Matrix3()},
       uTroikaUseGlyphColors: {value: true},
-      uTroikaSDFDebug: {value: false}
+      uTroikaSDFDebug: {value: false},
+      uUsePremultipliedAlpha: {value: 0}
     },
     vertexDefs: VERTEX_DEFS,
     vertexTransform: VERTEX_TRANSFORM,
