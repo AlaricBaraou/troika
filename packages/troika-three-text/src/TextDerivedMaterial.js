@@ -84,7 +84,7 @@ uniform vec3 uTroikaStrokeColor;
 uniform float uTroikaStrokeWidth;
 uniform float uTroikaStrokeOpacity;
 uniform bool uTroikaSDFDebug;
-uniform float uTroikaFillOutline;
+uniform float uUsePremultipliedAlpha;
 varying vec2 vTroikaGlyphUV;
 varying vec4 vTroikaTextureUVBounds;
 varying float vTroikaTextureChannel;
@@ -185,25 +185,22 @@ float edgeAlpha = uTroikaSDFDebug ?
   troikaGetEdgeAlpha(fragDistance, uTroikaEdgeOffset, max(aaDist, uTroikaBlurRadius));
 
 #if !defined(IS_DEPTH_MATERIAL) && !defined(IS_DISTANCE_MATERIAL)
-vec4 fillRGBA = gl_FragColor;
-fillRGBA.a *= uTroikaFillOpacity;
-vec4 strokeRGBA = uTroikaStrokeWidth == 0.0 ? fillRGBA : vec4(uTroikaStrokeColor, uTroikaStrokeOpacity);
-if (fillRGBA.a == 0.0) fillRGBA.rgb = strokeRGBA.rgb;
-gl_FragColor = mix(fillRGBA, strokeRGBA, smoothstep(
-  -uTroikaStrokeWidth - aaDist,
-  -uTroikaStrokeWidth + aaDist,
-  fragDistance
-));
-gl_FragColor.a *= edgeAlpha;
-// if is outline pass and outline only, "discard" where fill would be
-if (uTroikaFillOutline == 0.0 && uTroikaEdgeOffset > 0.0) {
-  float innerAlpha = 1.0 - troikaGetEdgeAlpha(fragDistance, 0.0, max(aaDist, uTroikaBlurRadius));
-  gl_FragColor.a *= innerAlpha;
-}
+      vec4 fillRGBA = gl_FragColor;
+      fillRGBA.a *= uTroikaFillOpacity;
+      vec4 strokeRGBA = uTroikaStrokeWidth == 0.0 ? fillRGBA : vec4(uTroikaStrokeColor, uTroikaStrokeOpacity);
+      if (fillRGBA.a == 0.0) fillRGBA.rgb = strokeRGBA.rgb;
+      gl_FragColor = mix(fillRGBA, strokeRGBA, smoothstep(
+        -uTroikaStrokeWidth - aaDist,
+        -uTroikaStrokeWidth + aaDist,
+        fragDistance
+      ));
+      gl_FragColor.a *= edgeAlpha;
 #endif
-
+if(uUsePremultipliedAlpha == 1.0){
+  gl_FragColor.rgb *= gl_FragColor.a;
+}
 if (edgeAlpha == 0.0) {
-  discard;
+    discard;
 }
 `
 
@@ -235,7 +232,7 @@ export function createTextDerivedMaterial(baseMaterial) {
       uTroikaOrient: {value: new Matrix3()},
       uTroikaUseGlyphColors: {value: true},
       uTroikaSDFDebug: {value: false},
-      uTroikaFillOutline: {value: 0}
+      uUsePremultipliedAlpha: {value: 0}
     },
     vertexDefs: VERTEX_DEFS,
     vertexTransform: VERTEX_TRANSFORM,

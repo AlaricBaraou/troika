@@ -7,6 +7,10 @@ import {
   PlaneGeometry,
   Vector3,
   Vector2,
+  CustomBlending,
+  OneFactor,
+  OneMinusSrcAlphaFactor,
+  NormalBlending,
 } from 'three'
 import { GlyphsGeometry } from './GlyphsGeometry.js'
 import { createTextDerivedMaterial } from './TextDerivedMaterial.js'
@@ -399,12 +403,12 @@ class Text extends Mesh {
     this.gpuAccelerateSDF = true
 
     /**
-     * @member {boolean} fillOutline
+     * @member {boolean} usePremultipliedAlpha
      * When `true`, the outline is drawn under the fill as well as around it. When `false`, the outline
      * is only drawn where there is no fill, like a halo. Defaults to `true`.
      * Setting this to `false` will produce cleaner edges and more readable text when the text appears small on screen.
      */
-    this.fillOutline = true
+    this.usePremultipliedAlpha = true
 
     this.debugSDF = false
   }
@@ -636,6 +640,8 @@ class Text extends Mesh {
         fillOpacity = outlineOpacity
         offsetX = this._parsePercent(outlineOffsetX) || 0
         offsetY = this._parsePercent(outlineOffsetY) || 0
+        
+
       } else {
         strokeWidth = Math.max(0, this._parsePercent(this.strokeWidth) || 0)
         if (strokeWidth) {
@@ -646,7 +652,15 @@ class Text extends Mesh {
         }
         fillOpacity = this.fillOpacity
       }
-
+      if(this.usePremultipliedAlpha){
+        material.premultipliedAlpha = true
+        material.blending = CustomBlending;
+        material.blendSrc = OneFactor; // Use the source color as-is
+        material.blendDst = OneMinusSrcAlphaFactor;
+      }else{
+        material.blending = NormalBlending
+      }
+      
       uniforms.uTroikaEdgeOffset.value = distanceOffset
       uniforms.uTroikaPositionOffset.value.set(offsetX, offsetY)
       uniforms.uTroikaBlurRadius.value = blurRadius
@@ -671,7 +685,7 @@ class Text extends Mesh {
       this.geometry.applyClipRect(uniforms.uTroikaClipRect.value)
     }
     uniforms.uTroikaSDFDebug.value = !!this.debugSDF
-    uniforms.uTroikaFillOutline.value = this.fillOutline ? 1 : 0
+    uniforms.uUsePremultipliedAlpha.value = this.usePremultipliedAlpha ? 1 : 0
     material.polygonOffset = !!this.depthOffset
     material.polygonOffsetFactor = material.polygonOffsetUnits = this.depthOffset || 0
 
